@@ -1,0 +1,7 @@
+.quiz-status, .outro {
+  display: none;
+}
+
+.answer-item {
+  list-style-type: none;
+}
