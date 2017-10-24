@@ -63,10 +63,10 @@ const getQuestion = function(index) {
 
 // HTML generator functions
 // ========================
-const generateAnswerItemHtml = function(answer, index) {
+const generateAnswerItemHtml = function(answer) {
   return `
     <li class="answer-item">
-      <input type="radio" name="answers" value=${index} />
+      <input type="radio" name="answers" value=${answer} />
       <span class="answer-text">${answer}</span>
     </li>
   `;
@@ -148,13 +148,13 @@ const handleStartQuiz = function() {
 const handleSubmitAnswer = function(e) {
   e.preventDefault();
   const question = getCurrentQuestion();
-  const selected = parseInt($('input:checked').val(), 10);
+  const selected = $('input:checked').val();
   store.userAnswers.push(selected);
   
   if (selected === question.correctAnswer) {
     store.feedback = 'You got it!';
   } else {
-    store.feedback = `Too bad! The correct answer was: ${question.answers[question.correctAnswer]}`;
+    store.feedback = `Too bad! The correct answer was: ${question.correctAnswer}`;
   }
 
   store.page = 'answer';
