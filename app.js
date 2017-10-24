@@ -6,14 +6,14 @@ const QUESTIONS = [
     answers: [
       'London', 'Paris', 'Rome', 'Washington DC'
     ],
-    correctAnswer: 0
+    correctAnswer: 'London'
   },
   {
     text: 'How many kilometers in one mile?',
     answers: [
       '0.6', '1.2', '1.6', '1.8'
     ],
-    correctAnswer: 2
+    correctAnswer: '1.6'
   }
 ];
 
