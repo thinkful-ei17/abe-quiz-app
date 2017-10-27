@@ -66,8 +66,8 @@ const getQuestion = function(index) {
 const generateAnswerItemHtml = function(answer, index) {
   return `
     <li class="answer-item">
-      <input type="radio" name="answers" value=${index} />
-      <span class="answer-text">${answer}</span>
+      <input type="radio" name="answer" value=${index} id="answer-${index}"/>
+      <label for="answer-${index}" class="answer-text">${answer}</label>
     </li>
   `;
 };
