@@ -65,10 +65,10 @@ const getQuestion = function(index) {
 // ========================
 const generateAnswerItemHtml = function(answer, index) {
   return `
-    <li class="answer-item">
+    <div class="answer-item">
       <input type="radio" name="answer" value=${index} id="answer-${index}"/>
       <label for="answer-${index}" class="answer-text">${answer}</label>
-    </li>
+    </div>
   `;
 };
 
@@ -79,11 +79,9 @@ const generateQuestionHtml = function(question) {
         <legend class="question-text">
           ${question.text}      
         </legend>
-        <ul class="question-answers-list">
           ${question.answers
             .map((answer, index) => generateAnswerItemHtml(answer, index))
             .join('')}
-        </ul>
           <button type="submit">Submit</button>
       </fieldset>
     </form>
