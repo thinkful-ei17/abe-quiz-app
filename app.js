@@ -84,9 +84,7 @@ const generateQuestionHtml = function(question) {
             .map((answer, index) => generateAnswerItemHtml(answer, index))
             .join('')}
         </ul>
-        <div>
-          <input type="submit" />
-        </div>
+          <button type="submit">Submit</button>
       </fieldset>
     </form>
   `;
