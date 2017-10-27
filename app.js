@@ -76,9 +76,7 @@ const generateQuestionHtml = function(question) {
   return `
     <form>
       <fieldset>
-        <legend class="question-text">
-          ${question.text}      
-        </legend>
+        <legend class="question-text">${question.text}</legend>
           ${question.answers
             .map((answer, index) => generateAnswerItemHtml(answer, index))
             .join('')}
@@ -90,9 +88,7 @@ const generateQuestionHtml = function(question) {
 
 const generateFeedbackHtml = function(feedback) {
   return `
-    <p>
-      ${feedback}
-    </p>
+    <p>${feedback}</p>
     <button class="continue js-continue">Continue</button>
   `;
 };
