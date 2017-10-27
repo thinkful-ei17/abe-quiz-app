@@ -75,15 +75,17 @@ const generateAnswerItemHtml = function(answer, index) {
 const generateQuestionHtml = function(question) {
   return `
     <form>
-      <div class="question-text">
-        ${question.text}      
-      </div>
-      <ul class="question-answers-list">
-        ${question.answers.map((answer, index) => generateAnswerItemHtml(answer, index)).join('')}
-      </ul>
-      <div>
-        <input type="submit" />
-      </div>
+      <fieldset>
+        <legend class="question-text">
+          ${question.text}      
+        </legend>
+        <ul class="question-answers-list">
+          ${question.answers.map((answer, index) => generateAnswerItemHtml(answer, index)).join('')}
+        </ul>
+        <div>
+          <input type="submit" />
+        </div>
+      </fieldset>
     </form>
   `;
 };
