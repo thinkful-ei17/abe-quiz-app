@@ -1,3 +1,5 @@
+'use strict';
+
 const TOP_LEVEL_COMPONENTS = ['js-intro', 'js-question', 'js-question-feedback', 'js-outro', 'js-quiz-status'];
 
 const QUESTIONS = [
@@ -111,7 +113,7 @@ const render = function() {
 
   $('.js-score').html(`<span>Score: ${getScore()}</span>`);
   $('.js-progress').html(`<span>Question ${current} of ${total}`);
-
+  
   switch (store.page) {
     case 'intro':
       $('.js-intro').show();
@@ -135,6 +137,9 @@ const render = function() {
       $('.js-outro').show();
       $('.quiz-status').show();
       break;
+      
+    default:
+      return;
   }
 };
 
