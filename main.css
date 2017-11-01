@@ -1,3 +1,22 @@
+* {
+  box-sizing: border-box;
+}
+
+/* Every element with a sibling directly before it 
+gets a 10px margin, allowing for even spacing between
+all elements. */
+* + * {
+  margin-top: 10px;
+}
+
+html {
+  font: 100%/1.5 serif;
+}
+
+button {
+  display: block;
+}
+
 .quiz-status, .outro {
   display: none;
 }

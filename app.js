@@ -1,28 +1,28 @@
-const TOP_LEVEL_COMPONENTS = ['js-intro', 'js-question', 'js-question-feedback', 'js-outro', 'js-quiz-status'];
+'use strict';
+
+const TOP_LEVEL_COMPONENTS = [
+  'js-intro', 'js-question', 'js-question-feedback', 'js-outro', 'js-quiz-status'
+];
 
 const QUESTIONS = [
-  { 
+  {
     text: 'Capital of England?',
-    answers: [
-      'London', 'Paris', 'Rome', 'Washington DC'
-    ],
+    answers: ['London', 'Paris', 'Rome', 'Washington DC'],
     correctAnswer: 'London'
   },
   {
     text: 'How many kilometers in one mile?',
-    answers: [
-      '0.6', '1.2', '1.6', '1.8'
-    ],
+    answers: ['0.6', '1.2', '1.6', '1.8'],
     correctAnswer: '1.6'
   }
 ];
 
-const getInitialStore = function(){
+const getInitialStore = function() {
   return {
     page: 'intro',
     currentQuestionIndex: null,
     userAnswers: [],
-    feedback: null,
+    feedback: null
   };
 };
 
@@ -75,24 +75,20 @@ const generateAnswerItemHtml = function(answer) {
 const generateQuestionHtml = function(question) {
   return `
     <form>
-      <div class="question-text">
-        ${question.text}      
-      </div>
-      <ul class="question-answers-list">
-        ${question.answers.map((answer, index) => generateAnswerItemHtml(answer, index)).join('')}
-      </ul>
-      <div>
-        <input type="submit" />
-      </div>
+      <fieldset>
+        <legend class="question-text">${question.text}</legend>
+          ${question.answers
+            .map((answer, index) => generateAnswerItemHtml(answer, index))
+            .join('')}
+          <button type="submit">Submit</button>
+      </fieldset>
     </form>
   `;
 };
 
 const generateFeedbackHtml = function(feedback) {
   return `
-    <p>
-      ${feedback}
-    </p>
+    <p>${feedback}</p>
     <button class="continue js-continue">Continue</button>
   `;
 };
@@ -104,7 +100,7 @@ const render = function() {
   hideAll();
 
   const question = getCurrentQuestion();
-  const { feedback } = store; 
+  const { feedback } = store;
   const { current, total } = getProgress();
 
   $('.js-score').html(`<span>Score: ${getScore()}</span>`);
@@ -114,7 +110,7 @@ const render = function() {
     case 'intro':
       $('.js-intro').show();
       break;
-    
+
     case 'question':
       html = generateQuestionHtml(question);
       $('.js-question').html(html);
@@ -133,6 +129,9 @@ const render = function() {
       $('.js-outro').show();
       $('.quiz-status').show();
       break;
+
+    default:
+      return;
   }
 };
 
@@ -150,7 +149,7 @@ const handleSubmitAnswer = function(e) {
   const question = getCurrentQuestion();
   const selected = $('input:checked').val();
   store.userAnswers.push(selected);
-  
+
   if (selected === question.correctAnswer) {
     store.feedback = 'You got it!';
   } else {
