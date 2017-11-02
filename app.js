@@ -73,13 +73,15 @@ const generateAnswerItemHtml = function(answer) {
 };
 
 const generateQuestionHtml = function(question) {
+  const answers = question.answers
+    .map((answer, index) => generateAnswerItemHtml(answer, index))
+    .join('');
+
   return `
     <form>
       <fieldset>
         <legend class="question-text">${question.text}</legend>
-          ${question.answers
-            .map((answer, index) => generateAnswerItemHtml(answer, index))
-            .join('')}
+          ${answers}
           <button type="submit">Submit</button>
       </fieldset>
     </form>
