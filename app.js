@@ -165,7 +165,7 @@ const decorateQuestion = function(question){
  */
 const addQuestion = function(questionObject){
   QUESTIONS.push(questionObject);
-}
+};
 
 
 
@@ -188,6 +188,19 @@ let store = getInitialStore();
 
 // Helper functions
 // ===============
+
+const getSelectedCategoryId = function(){
+  return $('.js-category option:selected').attr('id');
+}
+
+const getSelectedDifficulty = function(){
+  return $('.js-difficulty').val().toLowerCase();
+}
+
+const getSelectedNumberOfQuestions = function(){
+  return $('.js-total-questions').val();
+}
+
 const hideAll = function() {
   TOP_LEVEL_COMPONENTS.forEach(component => $(`.${component}`).hide());
 };
@@ -346,10 +359,4 @@ $(() => {
     getCategories(generateCategoriesHtml);
     start();
   });
-
-  // render();
-  // $('.js-intro, .js-outro').on('click', '.js-start', handleStartQuiz);
-
-  // $('.js-question').on('submit', handleSubmitAnswer);
-  // $('.js-question-feedback').on('click', '.js-continue', handleNextQuestion);
 });
