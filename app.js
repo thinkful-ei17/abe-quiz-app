@@ -1,23 +1,6 @@
 'use strict';
 /* global $*/
 
-const TOP_LEVEL_COMPONENTS = [
-  'js-intro', 'js-question', 'js-question-feedback', 'js-outro', 'js-quiz-status'
-];
-
-const QUESTIONS = [
-  {
-    text: 'Capital of England?',
-    answers: ['London', 'Paris', 'Rome', 'Washington DC'],
-    correctAnswer: 'London'
-  },
-  {
-    text: 'How many kilometers in one mile?',
-    answers: ['0.6', '1.2', '1.6', '1.8'],
-    correctAnswer: '1.6'
-  }
-];
-
 /**
  * Stores the Session Token for API Calls
  */
@@ -46,6 +29,24 @@ function requestSessionToken(){
     errorObj.message = 'There was an error';  // TODO Change this to be more descriptive for error message regarding tokens
   }
 }
+ 
+const TOP_LEVEL_COMPONENTS = [
+  'js-intro', 'js-question', 'js-question-feedback', 'js-outro', 'js-quiz-status'
+];
+
+const QUESTIONS = [
+  {
+    text: 'Capital of England?',
+    answers: ['London', 'Paris', 'Rome', 'Washington DC'],
+    correctAnswer: 'London'
+  },
+  {
+    text: 'How many kilometers in one mile?',
+    answers: ['0.6', '1.2', '1.6', '1.8'],
+    correctAnswer: '1.6'
+  }
+];
+
 
 const getInitialStore = function() {
   return {
