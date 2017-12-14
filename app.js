@@ -63,32 +63,44 @@ const fetchToken = function(){
 /**
  * Fetch a single question from the Open Trivia db 
  */
-const fetchQuestion = function(){
+const fetchQuestion = function(category, difficulty){
   const questionUrl = buildBaseUrl();
   questionUrl.searchParams.set('amount','1');
   questionUrl.searchParams.set('category','15');
+  questionUrl.searchParams.set('type','multiple');
   questionUrl.searchParams.set('token', SESSION_TOKEN);
 
   $.getJSON(questionUrl, function(response){
     try {
-      decorateQuestion(response.results[0]);
+      const question= response.results[0];
+      const decoratedQuestion = decorateQuestion(question);
+      addQuestion(decoratedQuestion);
     } catch (error) {
-     errorObj.error = error.message;
-     errorObj.message = 'There was an error retrieving the next question';
+      errorObj.error = error.message;
+      errorObj.message = 'There was an error retrieving the next question';
     }
   });
 };
 
 /**
- * Decorate Responses
+ * Decorate the question object from the received response to match the
+ * format in QUESTIONS
  */
-const decorateQuestion = function(){
+const decorateQuestion = function(question){
+  return {
+    text: question.question,
+    answers: [...question.incorrect_answers, question.correct_answer],
+    correctAnswer: question.correct_answer 
+  };
 }
 
 /**
  * Add question to Store
  */
-const addQuestion = function(){}
+const addQuestion = function(questionObject){
+  QUESTIONS.push(questionObject);
+}
+
 
 
 const TOP_LEVEL_COMPONENTS = [
@@ -156,6 +168,11 @@ const getQuestion = function(index) {
 
 // HTML generator functions
 // ========================
+
+/**
+ * Randomize Questions
+ */
+
 const generateAnswerItemHtml = function(answer) {
   return `
     <li class="answer-item">
