@@ -14,22 +14,60 @@ const errorObj = {
   message: null,
 }
 
+
+const BASE_URL = 'https://opentdb.com/';
+const MAIN_PATH = '/api.php';
+const TOKEN_PATH = '/api_token.php';
+
 /**
- * Request a session token for generating 'unique' questions.
- * Stores the result in SESSION_TOKEN.
+ * Build the endpoint URL for question calls
  */
-function requestSessionToken(){
-  try {
-    $.getJSON('https://opentdb.com/api_token.php?command=request', function(response){
-      SESSION_TOKEN = response.token;
-    }
-    );
-  } catch (error) {
-    errorObj.error  = error.message;
-    errorObj.message = 'There was an error';  // TODO Change this to be more descriptive for error message regarding tokens
-  }
+function buildBaseUrl(){
+  const url = new URL(BASE_URL);
+  url.pathname = MAIN_PATH;
+  return url;
 }
- 
+
+/**
+ * Build the endpoint url for Token calls
+ */
+function buildTokenUrl(){
+  const url = new URL(BASE_URL);
+  url.pathname = TOKEN_PATH;
+  url.searchParams.set('command','request');
+  return url;
+}
+
+/**
+ * Fetch a Token using the buildTokenUrl() method 
+ */
+function fetchToken(){
+  $.getJSON(buildTokenUrl(), function(response){
+    try {
+      SESSION_TOKEN = response.token;
+    } catch (error) {
+      errorObj.error = error.message;
+      errorObj.message = 'There was an error starting a new quiz session.'
+    }
+  });
+}
+
+/**
+ * Fetch a 
+ */
+function fetchQuestion(){}
+
+/**
+ * Decorate Responses
+ */
+function decorateQuestion(){}
+
+/**
+ * Add question to Store
+ */
+function addQuestion(){}
+
+
 const TOP_LEVEL_COMPONENTS = [
   'js-intro', 'js-question', 'js-question-feedback', 'js-outro', 'js-quiz-status'
 ];
