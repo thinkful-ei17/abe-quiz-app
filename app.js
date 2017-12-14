@@ -14,9 +14,17 @@ const errorObj = {
   message: null,
 }
 
-
+/**
+ * The Base URL for the Open Trivia Database
+ */
 const BASE_URL = 'https://opentdb.com/';
+/**
+ * The Primary path for Questions API
+ */
 const MAIN_PATH = '/api.php';
+/**
+ * The Primary path for working with Session Tokens
+ */
 const TOKEN_PATH = '/api_token.php';
 
 /**
