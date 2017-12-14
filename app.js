@@ -30,7 +30,7 @@ const TOKEN_PATH = '/api_token.php';
 /**
  * Build the endpoint URL for question calls
  */
-function buildBaseUrl(){
+const buildBaseUrl = function(){
   const url = new URL(BASE_URL);
   url.pathname = MAIN_PATH;
   return url;
@@ -39,7 +39,7 @@ function buildBaseUrl(){
 /**
  * Build the endpoint url for Token calls
  */
-function buildTokenUrl(){
+const buildTokenUrl = function(){
   const url = new URL(BASE_URL);
   url.pathname = TOKEN_PATH;
   url.searchParams.set('command','request');
@@ -49,7 +49,7 @@ function buildTokenUrl(){
 /**
  * Fetch a Token using the buildTokenUrl() method 
  */
-function fetchToken(){
+const fetchToken = function(){
   $.getJSON(buildTokenUrl(), function(response){
     try {
       SESSION_TOKEN = response.token;
@@ -63,17 +63,29 @@ function fetchToken(){
 /**
  * Fetch a 
  */
-function fetchQuestion(){}
+const fetchQuestion = function(){
+  const questionUrl = buildBaseUrl();
+  console.log(store);
+  /*questionUrl.searchParams.set();
+
+  $.getJSON(buildBaseUrl(), function(response){
+    try {
+      console.log()
+    } catch (error) {
+      
+    }
+  });*/
+}
 
 /**
  * Decorate Responses
  */
-function decorateQuestion(){}
+const decorateQuestion = function(){}
 
 /**
  * Add question to Store
  */
-function addQuestion(){}
+const addQuestion = function(){}
 
 
 const TOP_LEVEL_COMPONENTS = [
@@ -92,6 +104,7 @@ const QUESTIONS = [
     correctAnswer: '1.6'
   }
 ];
+
 
 
 const getInitialStore = function() {
