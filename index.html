@@ -19,7 +19,16 @@
   <main role="main">
     <section class="intro js-intro">
       <p>Welcome to the quiz.</p>
-      <button class="start js-start">Start Now</button>
+      <input type="number" class="js-total-questions" name="total-questions" min="1" max="50" value="10" disabled>
+      <select class="js-category" disabled>
+        <option id="0">Select a Quiz Category</option>
+      </select>
+      <select class="js-difficulty" disabled>
+        <option>Easy</option>
+        <option>Medium</option>
+        <option>Hard</option>
+      </select>
+      <button class="start js-start" disabled>Start Now</button>
     </section>
     <section class="question js-question"></section>
     <section class="question-feedback js-question-feedback"></section>
