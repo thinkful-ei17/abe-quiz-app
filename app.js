@@ -34,7 +34,7 @@ const buildBaseUrl = function(){
   const url = new URL(BASE_URL);
   url.pathname = MAIN_PATH;
   return url;
-}
+};
 
 /**
  * Build the endpoint url for Token calls
@@ -44,7 +44,7 @@ const buildTokenUrl = function(){
   url.pathname = TOKEN_PATH;
   url.searchParams.set('command','request');
   return url;
-}
+};
 
 /**
  * Fetch a Token using the buildTokenUrl() method 
@@ -58,29 +58,32 @@ const fetchToken = function(){
       errorObj.message = 'There was an error starting a new quiz session.'
     }
   });
-}
+};
 
 /**
- * Fetch a 
+ * Fetch a single question from the Open Trivia db 
  */
 const fetchQuestion = function(){
   const questionUrl = buildBaseUrl();
-  console.log(store);
-  /*questionUrl.searchParams.set();
+  questionUrl.searchParams.set('amount','1');
+  questionUrl.searchParams.set('category','15');
+  questionUrl.searchParams.set('token', SESSION_TOKEN);
 
-  $.getJSON(buildBaseUrl(), function(response){
+  $.getJSON(questionUrl, function(response){
     try {
-      console.log()
+      decorateQuestion(response.results[0]);
     } catch (error) {
-      
+     errorObj.error = error.message;
+     errorObj.message = 'There was an error retrieving the next question';
     }
-  });*/
-}
+  });
+};
 
 /**
  * Decorate Responses
  */
-const decorateQuestion = function(){}
+const decorateQuestion = function(){
+}
 
 /**
  * Add question to Store
