@@ -1,4 +1,5 @@
 'use strict';
+/* global $*/
 
 const TOP_LEVEL_COMPONENTS = [
   'js-intro', 'js-question', 'js-question-feedback', 'js-outro', 'js-quiz-status'
@@ -16,6 +17,35 @@ const QUESTIONS = [
     correctAnswer: '1.6'
   }
 ];
+
+/**
+ * Stores the Session Token for API Calls
+ */
+let SESSION_TOKEN = undefined;
+
+/**
+ * An object for relaying error information.
+ */
+const errorObj = {
+  error: null,
+  message: null,
+}
+
+/**
+ * Request a session token for generating 'unique' questions.
+ * Stores the result in SESSION_TOKEN.
+ */
+function requestSessionToken(){
+  try {
+    $.getJSON('https://opentdb.com/api_token.php?command=request', function(response){
+      SESSION_TOKEN = response.token;
+    }
+    );
+  } catch (error) {
+    errorObj.error  = error.message;
+    errorObj.message = 'There was an error';  // TODO Change this to be more descriptive for error message regarding tokens
+  }
+}
 
 const getInitialStore = function() {
   return {
@@ -109,31 +139,31 @@ const render = function() {
   $('.js-progress').html(`<span>Question ${current} of ${total}`);
 
   switch (store.page) {
-    case 'intro':
-      $('.js-intro').show();
-      break;
+  case 'intro':
+    $('.js-intro').show();
+    break;
 
-    case 'question':
-      html = generateQuestionHtml(question);
-      $('.js-question').html(html);
-      $('.js-question').show();
-      $('.quiz-status').show();
-      break;
+  case 'question':
+    html = generateQuestionHtml(question);
+    $('.js-question').html(html);
+    $('.js-question').show();
+    $('.quiz-status').show();
+    break;
 
-    case 'answer':
-      html = generateFeedbackHtml(feedback);
-      $('.js-question-feedback').html(html);
-      $('.js-question-feedback').show();
-      $('.quiz-status').show();
-      break;
+  case 'answer':
+    html = generateFeedbackHtml(feedback);
+    $('.js-question-feedback').html(html);
+    $('.js-question-feedback').show();
+    $('.quiz-status').show();
+    break;
 
-    case 'outro':
-      $('.js-outro').show();
-      $('.quiz-status').show();
-      break;
+  case 'outro':
+    $('.js-outro').show();
+    $('.quiz-status').show();
+    break;
 
-    default:
-      return;
+  default:
+    return;
   }
 };
 
