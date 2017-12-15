@@ -369,9 +369,11 @@ const handleSubmitAnswer = function(e) {
 
 const handleNextQuestion = function() {
   if (store.currentQuestionIndex === QUIZ_OPTIONS.questions -1) {
+    // we reached the end  
     fetchToken(function(response){
-      setSessionToken(response);
+      QUESTIONS.length=0;
       store = getInitialStore();
+      setSessionToken(response);
       store.page = 'outro';
       render();
     });
