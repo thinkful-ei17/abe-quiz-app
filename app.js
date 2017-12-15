@@ -12,135 +12,137 @@ let SESSION_TOKEN = undefined;
 const ERROR = {
   error: null,
   message: null,
-}
-
-/**
- * The Base URL for the Open Trivia Database
- */
-const BASE_URL = 'https://opentdb.com/';
-
-/**
- * The Primary path for Questions API
- */
-const MAIN_PATH = '/api.php';
-
-/**
- * The Primary path for working with Session Tokens
- */
-const TOKEN_PATH = '/api_token.php';
-
-/**
- * The Primary path for retrieving categories 
- */
-const CATEGORY_PATH = '/api_category.php';
-
-const DIFFICULTY = ['easy', 'medium','hard'];
-
-let SELECTED_DIFFICULTY = undefined;
-let TOTAL_QUESTIONS = 1;
-
-/**
- * Build the endpoint URL for question calls
- */
-const buildBaseUrl = function(){
-  const url = new URL(BASE_URL);
-  return url;
 };
 
 /**
- * Build the endpoint url for Token calls
+ * Contains the Configuration options for the API
  */
-const buildTokenUrl = function(){
-  const url = new URL(BASE_URL);
-  url.pathname = TOKEN_PATH;
-  url.searchParams.set('command','request');
-  return url;
+const API_CONFIG = {
+  base_url: 'https://opentdb.com',
+  paths: {
+    token_url: '/api_token.php', 
+    category_url: '/api_category.php',
+    question_url: '/api.php'
+  }
 };
 
 /**
- * 
+ * Returns a URL object based on the type passed in.
+ * Valid optiosn include: 'token', 'category' and 'question'
+ * @param {string} type 
  */
-const buildMainUrl = function(){
-  const mainUrl= buildBaseUrl();
-  mainUrl.pathname = MAIN_URL;
-  return mainUrl;
-}
+const buildURL = function(type){
+  let url = new URL(API_CONFIG.base_url);
+  switch(type){
+  case 'token':
+    url.pathname=API_CONFIG.paths.token_url;
+    url.searchParams.set('command','request');
+    return url;      
+  case 'category':
+    url.pathname=API_CONFIG.paths.category_url;
+    return url;
+  case 'question':
+    url.pathname=API_CONFIG.paths.question_url;
+    url.searchParams.set('type','multiple');
+    url.searchParams.set('amount', '1');
+    url.searchParams.set('category', QUIZ_OPTIONS.category);
+    url.searchParams.set('difficulty', QUIZ_OPTIONS.difficulty);
+    url.searchParams.set('token', SESSION_TOKEN);
+    return url;
+  }
+};
 
 /**
- * 
+ * Options for the Current Quiz Game
  */
-const buildCategoryUrl = function(){
-  const categoryUrl = buildBaseUrl()
-  categoryUrl.pathname = CATEGORY_PATH;
-  return categoryUrl;
-}
+const QUIZ_OPTIONS = {
+  category: 11,
+  difficulty: 'easy',
+  questions: 10,
+};
 
+/**
+ * Sets the global SESSION_TOKEN from the `fetchToken()` response 
+ * @param {object} response 
+ */
 const setSessionToken = function(response){
   try {
     SESSION_TOKEN = response.token;
   } catch (error) {
     ERROR.error = error.message;
-    ERROR.message = 'There was an error starting a new quiz session.'
+    ERROR.message = 'There was an error starting a new quiz session.';
   }
 };
 
+/**
+ * Retrieves the Categories from the API
+ * @callback callback
+ */
 const getCategories = function(callback){
-  $.getJSON(buildCategoryUrl(), callback);
+
+  $.getJSON(buildURL('category'), callback);
 };
 
+/**
+ * Generate the Categories HTML option elements from the API call
+ * should be used as a callback to `getCategories()`
+ * @param {object} response 
+ */
 const generateCategoriesHtml = function(response){
-  console.log(response.trivia_categories);
   let html = '';
   response.trivia_categories.forEach( c => html +=`<option id="${c.id}">${c.name}</option>`);
   $('.js-category').append(html);
-
 };
 
-const generateQuizSetupHtml = function(){
-
-  return `
-  <label for="numberOfQuestions">Number of Questions</label>
-  <select>
-  
-  </select>
-  `;
-}
-
+/**
+ * This function is the initial function that runs after we receive the Session Token
+ * and should be the callback for `fetchToken()`
+ */
 const start = function(){
   $('.js-start').removeAttr('disabled');
   $('.js-category').removeAttr('disabled');
   $('.js-total-questions').removeAttr('disabled');
   $('.js-difficulty').removeAttr('disabled');
+  
+  $('.js-category').change(function(){
+    setCategory();
+  });
+
+  $('.js-total-questions').change(function(){
+    setSelectedNumberOfQuestions();
+  });
+
+  $('.js-difficulty').change(function(){
+    setDifficulty();
+  });
+
   render();
+ 
   $('.js-intro, .js-outro').on('click', '.js-start', handleStartQuiz);
   
-    $('.js-question').on('submit', handleSubmitAnswer);
-    $('.js-question-feedback').on('click', '.js-continue', handleNextQuestion);
-}
+  $('.js-question').on('submit', handleSubmitAnswer);
+  $('.js-question-feedback').on('click', '.js-continue', handleNextQuestion);
+};
 
 /**
- * Fetch a Token using the buildTokenUrl() method 
+ * Fetch a Token using the `buildTokenUrl()` method 
+ * @callback callback
  */
 const fetchToken = function(callback){
-  $.getJSON(buildTokenUrl(), callback);
+  $.getJSON(buildURL('token'), callback);
 };
 
 /**
  * Fetch a single question from the Open Trivia db 
+ * @callback callback
  */
-const fetchQuestion = function(category, difficulty){
-  const questionUrl = buildBaseUrl();
-  questionUrl.searchParams.set('amount','1');
-  questionUrl.searchParams.set('category','15');
-  questionUrl.searchParams.set('type','multiple');
-  questionUrl.searchParams.set('difficulty','easy');
-  questionUrl.searchParams.set('token', SESSION_TOKEN);
-
-  $.getJSON(questionUrl, function(response){
+const fetchQuestion = function(callback){
+  $.getJSON(buildURL('question'), function(response){
     try {
       const question= response.results[0];
       const decoratedQuestion = decorateQuestion(question);
       addQuestion(decoratedQuestion);
+      callback();
     } catch (error) {
       ERROR.error = error.message;
       ERROR.message = 'There was an error retrieving the next question';
@@ -149,8 +151,11 @@ const fetchQuestion = function(category, difficulty){
 };
 
 /**
- * Decorate the question object from the received response to match the
- * format in QUESTIONS
+ * Decorate the question object from the response from `fetchQuestion()` 
+ * so that it fits the QUESTIONS object layout
+ * 
+ * @param {object} receives a question object from 
+ * @returns {object} 
  */
 const decorateQuestion = function(question){
   return {
@@ -158,16 +163,15 @@ const decorateQuestion = function(question){
     answers: [...question.incorrect_answers, question.correct_answer],
     correctAnswer: question.correct_answer 
   };
-}
+};
 
 /**
- * Add question to Store
+ * Adds a decorated question to the store
+ * @param {object} a `decorateQuestion()` response object
  */
 const addQuestion = function(questionObject){
   QUESTIONS.push(questionObject);
 };
-
-
 
 const TOP_LEVEL_COMPONENTS = [
   'js-intro', 'js-question', 'js-question-feedback', 'js-outro', 'js-quiz-status'
@@ -189,17 +193,44 @@ let store = getInitialStore();
 // Helper functions
 // ===============
 
+/**
+ * Returns the Category Id that the user selected in the DOM
+ * @returns {number}
+ */
 const getSelectedCategoryId = function(){
   return $('.js-category option:selected').attr('id');
-}
+};
 
+/**
+ * 
+ */
+const setCategory = function(){
+  QUIZ_OPTIONS.category = getSelectedCategoryId();
+};
+
+/**
+ * Returns the Difficulty value that the user selected in the DOM
+ * @returns {string}
+ */
 const getSelectedDifficulty = function(){
   return $('.js-difficulty').val().toLowerCase();
-}
+};
 
+const setDifficulty = function(){
+  QUIZ_OPTIONS.difficulty = getSelectedDifficulty();
+};
+
+/**
+ * Returns the Number of Questions the user selected in the DOM
+ * @returns {number}
+ */
 const getSelectedNumberOfQuestions = function(){
   return $('.js-total-questions').val();
-}
+};
+
+const setSelectedNumberOfQuestions = function(){
+  QUIZ_OPTIONS.questions = getSelectedNumberOfQuestions();
+};
 
 const hideAll = function() {
   TOP_LEVEL_COMPONENTS.forEach(component => $(`.${component}`).hide());
@@ -220,7 +251,7 @@ const getScore = function() {
 const getProgress = function() {
   return {
     current: store.currentQuestionIndex + 1,
-    total: QUESTIONS.length
+    total: QUIZ_OPTIONS.questions
   };
 };
 
@@ -234,12 +265,6 @@ const getQuestion = function(index) {
 
 // HTML generator functions
 // ========================
-
-const generateIntroHtml = function(){
-  return `
-  <
-  `
-}
 
 const generateAnswerItemHtml = function(answer) {
   return `
@@ -318,10 +343,12 @@ const render = function() {
 // Event handler functions
 // =======================
 const handleStartQuiz = function() {
-  store = getInitialStore();
-  store.page = 'question';
-  store.currentQuestionIndex = 0;
-  render();
+  fetchQuestion(function(){
+    store = getInitialStore();
+    store.page = 'question';
+    store.currentQuestionIndex = 0;
+    render();
+  });
 };
 
 const handleSubmitAnswer = function(e) {
@@ -341,18 +368,24 @@ const handleSubmitAnswer = function(e) {
 };
 
 const handleNextQuestion = function() {
-  if (store.currentQuestionIndex === QUESTIONS.length - 1) {
-    store.page = 'outro';
-    render();
+  if (store.currentQuestionIndex === QUIZ_OPTIONS.questions -1) {
+    fetchToken(function(response){
+      setSessionToken(response);
+      store = getInitialStore();
+      store.page = 'outro';
+      render();
+    });
     return;
   }
 
   store.currentQuestionIndex++;
-  store.page = 'question';
-  render();
+  fetchQuestion(function(){
+    store.page = 'question';
+    render();
+  });
 };
 
-// On DOM Ready, run render() and add event listeners
+// On DOM Ready fetches a session token and calls `start` which renders and sets handlers 
 $(() => {
   fetchToken(function(response){
     setSessionToken(response);
