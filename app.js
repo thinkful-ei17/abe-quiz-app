@@ -2,9 +2,35 @@
 /* global $*/
 
 /**
- * Stores the Session Token for API Calls
+ * TriviaApi
  */
-let SESSION_TOKEN = undefined;
+class TriviaApi{
+  constructor(){
+    this._sessionToken = '';
+  }
+
+  /**
+   * Get the current Session Token
+   */
+  getNewSessionToken(callback){
+    this._fetchToken(callback);
+  }
+
+  /**
+   * Fetch a new Token from the Open Trivia Database API 
+   */
+  _fetchToken(callback){
+    $.getJSON('https://opentdb.com/api_token.php?command=request', 
+      e => this._sessionToken = e.token);
+    if (!(callback === undefined)) callback();
+  }
+
+  getSessionToken(){
+    return this._sessionToken;
+  }
+}
+
+const trivia = new TriviaApi();
 
 /**
  * An object for relaying error information.
@@ -47,7 +73,7 @@ const buildURL = function(type){
     url.searchParams.set('amount', '1');
     url.searchParams.set('category', QUIZ_OPTIONS.category);
     url.searchParams.set('difficulty', QUIZ_OPTIONS.difficulty);
-    url.searchParams.set('token', SESSION_TOKEN);
+    url.searchParams.set('token', trivia.getSessionToken());
     return url;
   }
 };
@@ -59,19 +85,6 @@ const QUIZ_OPTIONS = {
   category: 11,
   difficulty: 'easy',
   questions: 10,
-};
-
-/**
- * Sets the global SESSION_TOKEN from the `fetchToken()` response 
- * @param {object} response 
- */
-const setSessionToken = function(response){
-  try {
-    SESSION_TOKEN = response.token;
-  } catch (error) {
-    ERROR.error = error.message;
-    ERROR.message = 'There was an error starting a new quiz session.';
-  }
 };
 
 /**
@@ -122,14 +135,6 @@ const start = function(){
   
   $('.js-question').on('submit', handleSubmitAnswer);
   $('.js-question-feedback').on('click', '.js-continue', handleNextQuestion);
-};
-
-/**
- * Fetch a Token using the `buildTokenUrl()` method 
- * @callback callback
- */
-const fetchToken = function(callback){
-  $.getJSON(buildURL('token'), callback);
 };
 
 /**
@@ -370,7 +375,10 @@ const handleSubmitAnswer = function(e) {
 const handleNextQuestion = function() {
   if (store.currentQuestionIndex === QUIZ_OPTIONS.questions -1) {
     // we reached the end  
-    fetchToken(function(response){
+
+    // Change this to use the new TriviaAPI 
+
+    trivia.getSessionToken(function(response){
       QUESTIONS.length=0;
       store = getInitialStore();
       setSessionToken(response);
@@ -389,8 +397,7 @@ const handleNextQuestion = function() {
 
 // On DOM Ready fetches a session token and calls `start` which renders and sets handlers 
 $(() => {
-  fetchToken(function(response){
-    setSessionToken(response);
+  trivia.getNewSessionToken(function(response){
     getCategories(generateCategoriesHtml);
     start();
   });
