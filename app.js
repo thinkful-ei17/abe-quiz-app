@@ -28,6 +28,10 @@ class TriviaApi{
   getSessionToken(){
     return this._sessionToken;
   }
+
+  getCategories(callback){
+    $.getJSON('https://opentdb.com/api_category.php', callback);
+  }
 }
 
 const trivia = new TriviaApi();
@@ -87,14 +91,6 @@ const QUIZ_OPTIONS = {
   questions: 10,
 };
 
-/**
- * Retrieves the Categories from the API
- * @callback callback
- */
-const getCategories = function(callback){
-
-  $.getJSON(buildURL('category'), callback);
-};
 
 /**
  * Generate the Categories HTML option elements from the API call
@@ -398,7 +394,7 @@ const handleNextQuestion = function() {
 // On DOM Ready fetches a session token and calls `start` which renders and sets handlers 
 $(() => {
   trivia.getNewSessionToken(function(response){
-    getCategories(generateCategoriesHtml);
+    trivia.getCategories(generateCategoriesHtml);
     start();
   });
 });
