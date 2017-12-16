@@ -372,12 +372,9 @@ const handleNextQuestion = function() {
   if (store.currentQuestionIndex === QUIZ_OPTIONS.questions -1) {
     // we reached the end  
 
-    // Change this to use the new TriviaAPI 
-
-    trivia.getSessionToken(function(response){
+    trivia.getNewSessionToken(function(){
       QUESTIONS.length=0;
       store = getInitialStore();
-      setSessionToken(response);
       store.page = 'outro';
       render();
     });
