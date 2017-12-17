@@ -139,12 +139,12 @@ class Render{
 
   render(){
     this._hideAll();
-    this.question = this._getCurrentQuestion();
+    this.question = this.getCurrentQuestion();
     this.feedback = store.feedback;
     let progress =  this._getProgress();
     this.current= progress.current;
     this.total = progress.total;
-    $('.js-score').html(`<span>Score: ${getScore()}</span>`);
+    $('.js-score').html(`<span>Score: ${this._getScore()}</span>`);
     $('.js-progress').html(`<span>Question ${this.current} of ${this.total}`);
 
     switch (store.page) {
@@ -153,14 +153,14 @@ class Render{
       break;
 
     case 'question':
-      this.html = generateQuestionHtml(this.question);
+      this.html = this._generateQuestionHtml(this.question);
       $('.js-question').html(this.html);
       $('.js-question').show();
       $('.quiz-status').show();
       break;
 
     case 'answer':
-      this.html = generateFeedbackHtml(this.feedback);
+      this.html = this._generateFeedbackHtml(this.feedback);
       $('.js-question-feedback').html(this.html);
       $('.js-question-feedback').show();
       $('.quiz-status').show();
@@ -176,9 +176,13 @@ class Render{
     }
   }
 
-  _getCurrentQuestion(){
+  getCurrentQuestion(){
     return store.currentQuestionIndex;
   }  
+
+  getQuestion(index) {
+    return store.questions[index];
+  }
 
   _getProgress(){
     return {
@@ -187,213 +191,171 @@ class Render{
     };
   }
 
+  _getSelectedCategoryid(){
+    return $('.js-category option:selected').attr('id');
+  }
+
+  setCategory(){
+    store.quizCategory = this._getSelectedCategoryid();
+  }
+
+  _getSelectedDifficulty(){
+    return $('.js-difficulty')
+      .val()
+      .toLowerCase();
+  }
+
+  setDifficulty(){
+    store.difficulty = this._getSelectedDifficulty();
+  }
+
+  setSelectedNumberOfQuestions(){
+    store.numberOfQuestions = $('.js-total-questions').val();
+  }
+
+
+  _getScore(){
+    const getQ = this._getQuestion;
+    return store.userAnswers.reduce((accumulator, userAnswer, index) => {
+      const question = getQ(index);
+  
+      if (question.correctAnswer === userAnswer) {
+        return accumulator + 1;
+      } else {
+        return accumulator;
+      }
+    }, 0);
+  }
+
+  _generateAnswerItemHtml(answer) {
+    return `
+      <li class='answer-item'>
+        <input type='radio' name='answers' value='${answer}' />
+        <span class='answer-text'>${answer}</span>
+      </li>
+    `;
+  }
+  
+  _generateQuestionHtml(question) {
+    const answers = store.questions[question].answers
+      .map((answer, index) => this._generateAnswerItemHtml(answer, index))
+      .join('');
+  
+    return `
+      <form>
+        <fieldset>
+          <legend class='question-text'>${store.questions[question].text}</legend>
+            ${answers}
+            <button type='submit'>Submit</button>
+        </fieldset>
+      </form>
+    `;
+  }
+  
+  _generateFeedbackHtml(feedback) {
+    return `
+      <p>${feedback}</p>
+      <button class='continue js-continue'>Continue</button>
+    `;
+  }
+
+  generateCategoriesHtml(response) {
+    let html = '';
+    response.trivia_categories.forEach(
+      c => (html += `<option id='${c.id}'>${c.name}</option>`)
+    );
+    $('.js-category').append(html);
+  }
+
+  start() {
+    const noOfQuestions = this.setSelectedNumberOfQuestions
+    const cat = this.setCategory;
+    const difficulty = this.setDifficulty;
+
+    $('.js-start').removeAttr('disabled');
+    $('.js-category').removeAttr('disabled');
+    $('.js-total-questions').removeAttr('disabled');
+    $('.js-difficulty').removeAttr('disabled');
+  
+    $('.js-category').change(function() {
+      cat();
+    });
+  
+    $('.js-total-questions').change(function() {
+      noOfQuestions();
+    });
+  
+    $('.js-difficulty').change(function() {
+      difficulty();
+    });
+  
+    this.render();
+  
+    $('.js-intro, .js-outro').on('click', '.js-start',events.handleStartQuiz);
+  
+    $('.js-question').on('submit', events.handleSubmitAnswer);
+    $('.js-question-feedback').on('click', '.js-continue', events.handleNextQuestion);
+  }
+  
+}
+
+class Events{
+  handleStartQuiz(){
+    trivia.getNewQuestion(function() {
+      store.page = 'question';
+      store.currentQuestionIndex = 0;
+      render.render();
+    });
+  }
+  
+  handleSubmitAnswer(e) {
+    e.preventDefault();
+    const question = render.getQuestion(render.getCurrentQuestion());
+    const selected = $('input:checked').val();
+    store.userAnswers.push(selected);
+  
+    if (selected === question.correctAnswer) {
+      store.feedback = 'You got it!';
+    } else {
+      store.feedback = `Too bad! The correct answer was: ${
+        question.correctAnswer
+      }`;
+    }
+  
+    store.page = 'answer';
+    render.render();
+  }
+  
+  handleNextQuestion() {
+    if (store.currentQuestionIndex === store.numberOfQuestions - 1) {
+      // we reached the end
+  
+      trivia.getNewSessionToken(function() {
+        store.page = 'outro';
+        render.render();
+      });
+      return;
+    }
+    store.currentQuestionIndex++;
+    trivia.getNewQuestion(function() {
+      store.page = 'question';
+      render.render();
+    });
+  }
 }
 
 const store = new Store();
 const trivia = new TriviaApi(store);
 const render = new Render();
-
-/**
- * Generate the Categories HTML option elements from the API call
- * should be used as a callback to `getCategories()`
- * @param {object} response
- */
-const generateCategoriesHtml = function(response) {
-  let html = '';
-  response.trivia_categories.forEach(
-    c => (html += `<option id='${c.id}'>${c.name}</option>`)
-  );
-  $('.js-category').append(html);
-};
-
-/**
- * This function is the initial function that runs after we receive the Session Token
- * and should be the callback for `fetchToken()`
- */
-const start = function() {
-  $('.js-start').removeAttr('disabled');
-  $('.js-category').removeAttr('disabled');
-  $('.js-total-questions').removeAttr('disabled');
-  $('.js-difficulty').removeAttr('disabled');
-
-  $('.js-category').change(function() {
-    setCategory();
-  });
-
-  $('.js-total-questions').change(function() {
-    setSelectedNumberOfQuestions();
-  });
-
-  $('.js-difficulty').change(function() {
-    setDifficulty();
-  });
-
-  render.render();
-
-  $('.js-intro, .js-outro').on('click', '.js-start',handleStartQuiz);
-
-  $('.js-question').on('submit', handleSubmitAnswer);
-  $('.js-question-feedback').on('click', '.js-continue', handleNextQuestion);
-};
-
-
-// Helper functions
-// ===============
-
-/**
- * Returns the Category Id that the user selected in the DOM
- * @returns {number}
- */
-const getSelectedCategoryId = function() {
-  return $('.js-category option:selected').attr('id');
-};
-
-/**
- *
- */
-const setCategory = function() {
-  store.quizCategory = getSelectedCategoryId();
-};
-
-/**
- * Returns the Difficulty value that the user selected in the DOM
- * @returns {string}
- */
-const getSelectedDifficulty = function() {
-  return $('.js-difficulty')
-    .val()
-    .toLowerCase();
-};
-
-const setDifficulty = function() {
-  store.difficulty = getSelectedDifficulty();
-};
-
-/**
- * Returns the Number of Questions the user selected in the DOM
- * @returns {number}
- */
-const getSelectedNumberOfQuestions = function() {
-  return $('.js-total-questions').val();
-};
-
-const setSelectedNumberOfQuestions = function() {
-  store.numberOfQuestions = getSelectedNumberOfQuestions();
-};
-
-
-
-const getScore = function() {
-  return store.userAnswers.reduce((accumulator, userAnswer, index) => {
-    const question = getQuestion(index);
-
-    if (question.correctAnswer === userAnswer) {
-      return accumulator + 1;
-    } else {
-      return accumulator;
-    }
-  }, 0);
-};
-
-const getCurrentQuestion = function() {
-  return store.currentQuestionIndex;
-};
-
-const getQuestion = function(index) {
-  return store.questions[index];
-};
-
-// HTML generator functions
-// ========================
-
-const generateAnswerItemHtml = function(answer) {
-  return `
-    <li class='answer-item'>
-      <input type='radio' name='answers' value='${answer}' />
-      <span class='answer-text'>${answer}</span>
-    </li>
-  `;
-};
-
-const generateQuestionHtml = function(question) {
-  const answers = store.questions[question].answers
-    .map((answer, index) => generateAnswerItemHtml(answer, index))
-    .join('');
-
-  return `
-    <form>
-      <fieldset>
-        <legend class='question-text'>${store.questions[question].text}</legend>
-          ${answers}
-          <button type='submit'>Submit</button>
-      </fieldset>
-    </form>
-  `;
-};
-
-const generateFeedbackHtml = function(feedback) {
-  return `
-    <p>${feedback}</p>
-    <button class='continue js-continue'>Continue</button>
-  `;
-};
-
-
-// Event handler functions
-// =======================
-const handleStartQuiz = function() {
-  trivia.getNewQuestion(function() {
-    store.page = 'question';
-    store.currentQuestionIndex = 0;
-    render.render();
-  });
-};
-
-const handleSubmitAnswer = function(e) {
-  e.preventDefault();
-  const question = getQuestion(getCurrentQuestion());
-  const selected = $('input:checked').val();
-  store.userAnswers.push(selected);
-
-  if (selected === question.correctAnswer) {
-    store.feedback = 'You got it!';
-  } else {
-    store.feedback = `Too bad! The correct answer was: ${
-      question.correctAnswer
-    }`;
-  }
-
-  store.page = 'answer';
-  render.render();
-};
-
-const handleNextQuestion = function() {
-  if (store.currentQuestionIndex === store.numberOfQuestions - 1) {
-    // we reached the end
-
-    trivia.getNewSessionToken(function() {
-      store.page = 'outro';
-      render.render();
-    });
-    return;
-  }
-
-  store.currentQuestionIndex++;
-  trivia.getNewQuestion(function() {
-    store.page = 'question';
-    render.render();
-  });
-};
-
-
+const events = new Events();
 
 // On DOM Ready fetches a session token and calls `start` which renders and sets handlers
 $(() => {
   store.NewGame();
   trivia.getNewSessionToken(function() {
-    trivia.getCategories(generateCategoriesHtml);
-    setDifficulty();
-    setSelectedNumberOfQuestions();
-    start();
+    trivia.getCategories(render.generateCategoriesHtml);
+    render.setDifficulty();
+    render.setSelectedNumberOfQuestions();
+    render.start();
   });
 });
