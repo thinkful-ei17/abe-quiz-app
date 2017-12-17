@@ -191,12 +191,12 @@ class Render{
     };
   }
 
-  _getSelectedCategoryid(){
+  _getSelectedCategoryId(){
     return $('.js-category option:selected').attr('id');
   }
 
   setCategory(){
-    store.quizCategory = this._getSelectedCategoryid();
+    store.quizCategory = this._getSelectedCategoryId();
   }
 
   _getSelectedDifficulty(){
@@ -215,9 +215,8 @@ class Render{
 
 
   _getScore(){
-    const getQ = this._getQuestion;
     return store.userAnswers.reduce((accumulator, userAnswer, index) => {
-      const question = getQ(index);
+      const question = Render.prototype.getQuestion(index);
   
       if (question.correctAnswer === userAnswer) {
         return accumulator + 1;
@@ -268,7 +267,7 @@ class Render{
   }
 
   start() {
-    const noOfQuestions = this.setSelectedNumberOfQuestions
+    const noOfQuestions = this.setSelectedNumberOfQuestions;
     const cat = this.setCategory;
     const difficulty = this.setDifficulty;
 
