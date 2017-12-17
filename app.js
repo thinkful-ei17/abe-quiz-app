@@ -27,12 +27,23 @@ class TriviaApi {
     if (!(callback === undefined)) callback();
   }
 
+  /**
+   * Get session 
+   */
   getSessionToken() {
     return this._sessionToken;
   }
 
+  /**
+   * 
+   * @callback callback 
+   */
   getCategories(callback) {
-    $.getJSON('https://opentdb.com/api_category.php', callback);
+    try {
+      $.getJSON('https://opentdb.com/api_category.php', callback);
+    } catch (error){
+      throw new Error('Error retrieving categories: ${error.message}');
+    }
   }
 
   _fetchQuestion(callback) {
@@ -40,18 +51,16 @@ class TriviaApi {
     url.pathname = '/api.php';
     url.searchParams.set('type', 'multiple');
     url.searchParams.set('amount', '1');
-    url.searchParams.set('category', QUIZ_OPTIONS.category);
-    url.searchParams.set('difficulty', QUIZ_OPTIONS.difficulty);
+    url.searchParams.set('category', store.quizCategory);
+    url.searchParams.set('difficulty', store.difficulty);
     url.searchParams.set('token', this.getSessionToken());
-    
     const decorate = this._decorateQuestion;
-    const add = this._addQuestion;
     const cb = callback;
     $.getJSON(url, function(response){
       try {
         const question = response.results[0];
         const decoratedQuestion = decorate(question);
-        add(decoratedQuestion);
+        store.questions.push(decoratedQuestion);
         cb();
       } catch (error) {
         throw new Error(`there was an error retrieving the next question: ${error.message}`);
@@ -59,8 +68,11 @@ class TriviaApi {
     });
   }
 
+  /**
+   * 
+   * @param {object} question 
+   */
   _decorateQuestion(question) {
-    console.log('decorate question ran');
     return {
       text: question.question,
       answers: [...question.incorrect_answers, question.correct_answer],
@@ -68,26 +80,118 @@ class TriviaApi {
     };
   }
 
-  _addQuestion(questionObject) {
-    console.log('add question ran');
-    QUESTIONS.push(questionObject);
-  }
-  
+  /**
+   * 
+   * @callback callback
+   */
   getNewQuestion(callback){
     this._fetchQuestion(callback);
   }
 }
+class Store{
+  constructor(){
+    this.page = 'intro';
+    this.currentQuestionIndex = null;
+    this.userAnswers = [];
+    this.feedback = null;
+    this.quizCategory = 9;
+    this.difficulty = null;
+    this.numberOfQuestions = null;
+    this.questions = [];
+  }
 
-const trivia = new TriviaApi();
+  NewGame(){
+    this._resetStore();
+  }
 
-/**
- * Options for the Current Quiz Game
- */
-const QUIZ_OPTIONS = {
-  category: 11,
-  difficulty: 'easy',
-  questions: 10
-};
+  _resetStore(){
+    this.page = 'intro';
+    this.currentQuestionIndex = null;
+    this.userAnswers = [];
+    this.feedback = null;
+    this.quizCategory = 9; // Default to `General Knowledge`
+    this.difficulty = null;
+    this.numberOfQuestions = null;
+    this.questions = [];
+  }
+}
+
+class Render{
+  constructor(){
+    this.html = '';
+    this._top_level_compnents = [
+      'js-intro',
+      'js-question',
+      'js-question-feedback',
+      'js-outro',
+      'js-quiz-status'
+    ];
+    this._hideAll();
+    this.question='';
+    this.feedback='';
+    this.current='';
+    this.total='';
+  }
+
+  _hideAll(){
+    this._top_level_compnents.forEach(c => $(`.${c}`).hide());
+  }
+
+  render(){
+    this._hideAll();
+    this.question = this._getCurrentQuestion();
+    this.feedback = store.feedback;
+    let progress =  this._getProgress();
+    this.current= progress.current;
+    this.total = progress.total;
+    $('.js-score').html(`<span>Score: ${getScore()}</span>`);
+    $('.js-progress').html(`<span>Question ${this.current} of ${this.total}`);
+
+    switch (store.page) {
+    case 'intro':
+      $('.js-intro').show();
+      break;
+
+    case 'question':
+      this.html = generateQuestionHtml(this.question);
+      $('.js-question').html(this.html);
+      $('.js-question').show();
+      $('.quiz-status').show();
+      break;
+
+    case 'answer':
+      this.html = generateFeedbackHtml(this.feedback);
+      $('.js-question-feedback').html(this.html);
+      $('.js-question-feedback').show();
+      $('.quiz-status').show();
+      break;
+
+    case 'outro':
+      $('.js-outro').show();
+      $('.quiz-status').show();
+      break;
+
+    default:
+      return;
+    }
+  }
+
+  _getCurrentQuestion(){
+    return store.currentQuestionIndex;
+  }  
+
+  _getProgress(){
+    return {
+      current: store.currentQuestionIndex+1,
+      total: store.numberOfQuestions
+    };
+  }
+
+}
+
+const store = new Store();
+const trivia = new TriviaApi(store);
+const render = new Render();
 
 /**
  * Generate the Categories HTML option elements from the API call
@@ -124,34 +228,14 @@ const start = function() {
     setDifficulty();
   });
 
-  render();
+  render.render();
 
-  $('.js-intro, .js-outro').on('click', '.js-start', handleStartQuiz);
+  $('.js-intro, .js-outro').on('click', '.js-start',handleStartQuiz);
 
   $('.js-question').on('submit', handleSubmitAnswer);
   $('.js-question-feedback').on('click', '.js-continue', handleNextQuestion);
 };
 
-const TOP_LEVEL_COMPONENTS = [
-  'js-intro',
-  'js-question',
-  'js-question-feedback',
-  'js-outro',
-  'js-quiz-status'
-];
-
-const QUESTIONS = [];
-
-const getInitialStore = function() {
-  return {
-    page: 'intro',
-    currentQuestionIndex: null,
-    userAnswers: [],
-    feedback: null
-  };
-};
-
-let store = getInitialStore();
 
 // Helper functions
 // ===============
@@ -168,7 +252,7 @@ const getSelectedCategoryId = function() {
  *
  */
 const setCategory = function() {
-  QUIZ_OPTIONS.category = getSelectedCategoryId();
+  store.quizCategory = getSelectedCategoryId();
 };
 
 /**
@@ -182,7 +266,7 @@ const getSelectedDifficulty = function() {
 };
 
 const setDifficulty = function() {
-  QUIZ_OPTIONS.difficulty = getSelectedDifficulty();
+  store.difficulty = getSelectedDifficulty();
 };
 
 /**
@@ -194,12 +278,10 @@ const getSelectedNumberOfQuestions = function() {
 };
 
 const setSelectedNumberOfQuestions = function() {
-  QUIZ_OPTIONS.questions = getSelectedNumberOfQuestions();
+  store.numberOfQuestions = getSelectedNumberOfQuestions();
 };
 
-const hideAll = function() {
-  TOP_LEVEL_COMPONENTS.forEach(component => $(`.${component}`).hide());
-};
+
 
 const getScore = function() {
   return store.userAnswers.reduce((accumulator, userAnswer, index) => {
@@ -213,19 +295,12 @@ const getScore = function() {
   }, 0);
 };
 
-const getProgress = function() {
-  return {
-    current: store.currentQuestionIndex + 1,
-    total: QUIZ_OPTIONS.questions
-  };
-};
-
 const getCurrentQuestion = function() {
-  return QUESTIONS[store.currentQuestionIndex];
+  return store.currentQuestionIndex;
 };
 
 const getQuestion = function(index) {
-  return QUESTIONS[index];
+  return store.questions[index];
 };
 
 // HTML generator functions
@@ -241,14 +316,14 @@ const generateAnswerItemHtml = function(answer) {
 };
 
 const generateQuestionHtml = function(question) {
-  const answers = question.answers
+  const answers = store.questions[question].answers
     .map((answer, index) => generateAnswerItemHtml(answer, index))
     .join('');
 
   return `
     <form>
       <fieldset>
-        <legend class='question-text'>${question.text}</legend>
+        <legend class='question-text'>${store.questions[question].text}</legend>
           ${answers}
           <button type='submit'>Submit</button>
       </fieldset>
@@ -263,62 +338,20 @@ const generateFeedbackHtml = function(feedback) {
   `;
 };
 
-// Render function - uses `store` object to construct entire page every time it's run
-// ===============
-const render = function() {
-  let html;
-  hideAll();
-
-  const question = getCurrentQuestion();
-  const { feedback } = store;
-  const { current, total } = getProgress();
-
-  $('.js-score').html(`<span>Score: ${getScore()}</span>`);
-  $('.js-progress').html(`<span>Question ${current} of ${total}`);
-
-  switch (store.page) {
-  case 'intro':
-    $('.js-intro').show();
-    break;
-
-  case 'question':
-    html = generateQuestionHtml(question);
-    $('.js-question').html(html);
-    $('.js-question').show();
-    $('.quiz-status').show();
-    break;
-
-  case 'answer':
-    html = generateFeedbackHtml(feedback);
-    $('.js-question-feedback').html(html);
-    $('.js-question-feedback').show();
-    $('.quiz-status').show();
-    break;
-
-  case 'outro':
-    $('.js-outro').show();
-    $('.quiz-status').show();
-    break;
-
-  default:
-    return;
-  }
-};
 
 // Event handler functions
 // =======================
 const handleStartQuiz = function() {
   trivia.getNewQuestion(function() {
-    store = getInitialStore();
     store.page = 'question';
     store.currentQuestionIndex = 0;
-    render();
+    render.render();
   });
 };
 
 const handleSubmitAnswer = function(e) {
   e.preventDefault();
-  const question = getCurrentQuestion();
+  const question = getQuestion(getCurrentQuestion());
   const selected = $('input:checked').val();
   store.userAnswers.push(selected);
 
@@ -331,18 +364,16 @@ const handleSubmitAnswer = function(e) {
   }
 
   store.page = 'answer';
-  render();
+  render.render();
 };
 
 const handleNextQuestion = function() {
-  if (store.currentQuestionIndex === QUIZ_OPTIONS.questions - 1) {
+  if (store.currentQuestionIndex === store.numberOfQuestions - 1) {
     // we reached the end
 
     trivia.getNewSessionToken(function() {
-      QUESTIONS.length = 0;
-      store = getInitialStore();
       store.page = 'outro';
-      render();
+      render.render();
     });
     return;
   }
@@ -350,14 +381,19 @@ const handleNextQuestion = function() {
   store.currentQuestionIndex++;
   trivia.getNewQuestion(function() {
     store.page = 'question';
-    render();
+    render.render();
   });
 };
 
+
+
 // On DOM Ready fetches a session token and calls `start` which renders and sets handlers
 $(() => {
+  store.NewGame();
   trivia.getNewSessionToken(function() {
     trivia.getCategories(generateCategoriesHtml);
+    setDifficulty();
+    setSelectedNumberOfQuestions();
     start();
   });
 });
